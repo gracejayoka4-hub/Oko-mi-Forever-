@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Oko Mi ❤️ — A Storybook for Tobi</title>
+<style>
+  :root{
+    --deep:#5d0b0b;
+    --deep2:#9f1414;
+    --gold:#d4af37;
+    --ivory:#fff8f4;
+    --accent: rgba(212,175,55,0.12);
+    font-family: "Georgia", "Times New Roman", serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background: linear-gradient(180deg,var(--deep) 0%, #2b0606 100%);
+    color:var(--ivory);
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    overflow-x:hidden;
+  }
+  .frame{
+    max-width:900px;
+    margin:0 auto;
+    padding:22px;
+  }
+  header{
+    text-align:center;
+    padding-top:18px;
+  }
+  .title{
+    color:var(--gold);
+    font-size:28px;
+    letter-spacing:0.6px;
+    margin:0;
+    text-shadow: 0 6px 20px rgba(0,0,0,0.6);
+  }
+  .welcome{
+    color:#ffeedd;
+    margin-top:6px;
+    font-size:14px;
+    opacity:0.95;
+  }
+
+  /* Story pages */
+  .story{
+    margin:28px 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.06));
+    border-radius:16px;
+    padding:18px;
+    border:1px solid var(--accent);
+    box-shadow: 0 18px 40px rgba(0,0,0,0.6);
+  }
+  .page{
+    min-height:380px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:18px;
+  }
+  .page h2{ margin:6px 0; color:#fff; font-size:20px;}
+  .page p{ margin:0; color:#fff7f0; font-size:16px; white-space:pre-wrap; }
+
+  .nav{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    margin-top:14px;
+  }
+  .btn{
+    background:linear-gradient(180deg,var(--gold), #c39827);
+    color:#2b1300;
+    padding:10px 14px;
+    border-radius:10px;
+    font-weight:700;
+    cursor:pointer;
+    border: none;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.45);
+  }
+  .ghost{
+    background:transparent;
+    border:1px solid rgba(255,255,255,0.06);
+    color:#ffd;
+    padding:10px 12px;
+    border-radius:10px;
+    cursor:pointer;
+  }
+
+  /* Slideshow */
+  .slideshow{
+    width:100%;
+    max-width:760px;
+    height:320px;
+    border-radius:12px;
+    overflow:hidden;
+    position:relative;
+    background:rgba(0,0,0,0.25);
+    border:1px solid var(--accent);
+  }
+  .slide{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    opacity:0;
+    transition:opacity .6s ease;
+  }
+  .slide.visible{ opacity:1; }
+  .slide img{ width:100%; height:100%; object-fit:cover; }
+
+  .slide-controls{
+    position:absolute;
+    bottom:12px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    gap:8px;
+  }
+  .dot{
+    width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.25);
+  }
+  .dot.active{ background:var(--gold); box-shadow: 0 6px 18px rgba(0,0,0,0.5); }
+
+  /* Reply box */
+  .reply-box{
+    width:100%;
+    max-width:720px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    align-items:center;
+  }
+  textarea{
+    width:100%;
+    min-height:120px;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.06);
+    background: rgba(0,0,0,0.35);
+    color:var(--ivory);
+    resize:vertical;
+    font-size:15px;
+  }
+
+  /* Answer choices */
+  .choices{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:6px;}
+  .choice{
+    background:rgba(255,255,255,0.06);
+    padding:10px 12px;
+    border-radius:999px;
+    border:1px solid rgba(212,175,55,0.12);
+    cursor:pointer;
+    color:#fff;
+  }
+  .choice.selected{ background:var(--gold); color:#2b1300; font-weight:700; }
+
+  footer{ text-align:center; margin:18px 0 40px; color:#ffeedd; font-size:14px; opacity:0.95;}
+
+  /* Password gate */
+  .gate{
+    position:fixed;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: linear-gradient(180deg, rgba(0,0,0,0.7), rgba(0,0,0,0.85));
+    z-index:9999;
+  }
+  .gate-box{
+    width:92%;
+    max-width:420px;
+    background:var(--ivory);
+    padding:18px;
+    border-radius:12px;
+    text-align:center;
+    color:#2b1300;
+  }
+  .gate-box input{ width:100%; padding:12px; margin-top:10px; border-radius:10px; border:1px solid #ddd; }
+
+  @media (max-width:600px){
+    .title{ font-size:22px;}
+    .slideshow{ height:260px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- Password gate -->
+<div class="gate" id="gate">
+  <div class="gate-box" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+    <h3 id="gateTitle">Welcome to Oko Mi ❤️</h3>
+    <p>Enter the secret passphrase to open this little corner of my heart.</p>
+    <input id="pass" placeholder="Enter passphrase" aria-label="passphrase" />
+    <div style="margin-top:10px; display:flex; gap:8px; justify-content:center;">
+      <button class="btn" id="unlock">Open</button>
+    </div>
+    <p style="font-size:13px; color:#555; margin-top:10px;">(Password: <strong>okomi</strong>)</p>
+  </div>
+</div>
+
+<div class="frame" id="content" aria-hidden="true" style="visibility:hidden;">
+  <header>
+    <div class="title">Oko mi ❤️</div>
+    <div class="welcome">Welcome to a little corner of my heart, made just for you 💗</div>
+  </header>
+
+  <div class="story">
+    <div class="page" id="page-1">
+      <h2>A Storybook Love Letter</h2>
+      <p>My Love,</p>
+      <p>Happy Birthday to the boy I love most in the whole wide world. On this special day, I want to pour out my heart and remind you just how much you mean to me.</p>
+      <p><em>Swipe or tap next to continue our story...</em></p>
+    </div>
+
+    <div class="page" style="display:none" id="page-2">
+      <h2>The Day You Came</h2>
+      <p>Since the day you came into my life, nothing has ever been the same. You’ve shown me what real love feels like — patient, comforting, steady, and true.</p>
+    </div>
+
+    <div class="page" style="display:none" id="page-3">
+      <h2>Home is You</h2>
+      <p>You make me smile in ways I didn’t know I could. With you, I’ve found a home — not a place, but a person.</p>
+    </div>
+
+    <div class="page" style="display:none" id="page-4">
+      <h2>My Promise</h2>
+      <p>I’m here for every day — cheering you on, holding your hand, and loving you without limits.</p>
+    </div>
+
+    <div class="page" style="display:none" id="page-5">
+      <h2>Gallery</h2>
+      <div class="slideshow" id="slideshow">
+        <div class="slide visible" data-index="0">
+          <img src="" alt="photo 1" id="preview0">
+        </div>
+        <!-- more slides will be added dynamically -->
+      </div>
+
+      <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+        <label class="btn" for="photoInput">Add Photos</label>
+        <input id="photoInput" type="file" accept="image/*" multiple style="display:none" />
+        <button id="prevSlide" class="ghost">Prev</button>
+        <button id="nextSlide" class="ghost">Next</button>
+      </div>
+
+      <div class="slide-controls" id="dots" style="margin-top:10px;"></div>
+
+      <p style="margin-top:12px; color:#ffe;">Every memory with you is my favourite chapter 💫</p>
+    </div>
+
+    <div class="page" style="display:none" id="page-6">
+      <h2>Will you still choose me?</h2>
+      <p>Would you still choose me in every lifetime?</p>
+      <div class="choices" id="choices">
+        <div class="choice" data-val="A thousand times, yes ❤️">A thousand times, yes ❤️</div>
+        <div class="choice" data-val="Forever and always 💫">Forever and always 💫</div>
+        <div class="choice" data-val="I already did, and I always will 🥹">I already did, and I always will 🥹</div>
+      </div>
+      <p id="choiceSent" style="margin-top:10px; display:none; color:#ffd;">Thanks for choosing — your answer has been saved for her to see.</p>
+    </div>
+
+    <div class="page" style="display:none" id="page-7">
+      <h2>Write Back</h2>
+      <div class="reply-box">
+        <textarea id="reply" placeholder="Write a short message back to her..."></textarea>
+        <div style="display:flex; gap:8px; justify-content:center;">
+          <button id="sendReply" class="btn">Send Reply</button>
+          <button id="clearReply" class="ghost">Clear</button>
+        </div>
+        <p id="replySaved" style="margin-top:8px; color:#ffd; display:none;">Message saved locally — she can view it when she opens this page.</p>
+      </div>
+    </div>
+
+    <div class="page" style="display:none" id="page-8">
+      <h2>Happy Birthday, My Forever</h2>
+      <p>Happy Birthday, my forever. You’re my once-in-a-lifetime love — and I’d choose you in every universe. ❤️</p>
+      <p style="margin-top:12px; font-size:13px; opacity:0.9;">29th September 2025</p>
+    </div>
+
+    <div class="nav" style="margin-top:18px;">
+      <button class="ghost" id="prevPage">Previous</button>
+      <button class="btn" id="nextPage">Next</button>
+    </div>
+  </div>
+
+  <footer>Made with ♥ for Oluwatobiloba — Oko mi forever</footer>
+</div>
+
+<script>
+  // Password gate
+  const gate = document.getElementById('gate');
+  const unlock = document.getElementById('unlock');
+  const pass = document.getElementById('pass');
+  const content = document.getElementById('content');
+
+  const PASSWORD = 'okomi'; // change in file if you want a different passphrase
+
+  function openGate(){
+    gate.style.display = 'none';
+    content.style.visibility = 'visible';
+    content.setAttribute('aria-hidden','false');
+  }
+
+  unlock.addEventListener('click', ()=>{
+    if(pass.value.trim().toLowerCase() === PASSWORD){
+      openGate();
+    } else {
+      alert('Wrong passphrase. If you need it again, check with the sender.');
+    }
+  });
+
+  pass.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter') unlock.click();
+  });
+
+  // Story pages logic
+  const pages = Array.from(document.querySelectorAll('[id^="page-"]'));
+  let current = 0;
+  function showPage(i){
+    pages.forEach((p, idx)=>{
+      if(idx===i) {
+        p.style.display = 'flex';
+      } else {
+        p.style.display = 'none';
+      }
+    });
+    // scroll into view for mobile feel
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+  showPage(current);
+
+  document.getElementById('nextPage').addEventListener('click', ()=>{
+    if(current < pages.length-1) current++;
+    showPage(current);
+  });
+  document.getElementById('prevPage').addEventListener('click', ()=>{
+    if(current > 0) current--;
+    showPage(current);
+  });
+
+  // Slideshow logic
+  const photoInput = document.getElementById('photoInput');
+  const slideshow = document.getElementById('slideshow');
+  const dots = document.getElementById('dots');
+  const prevSlideBtn = document.getElementById('prevSlide');
+  const nextSlideBtn = document.getElementById('nextSlide');
+
+  let slides = [];
+  let currentSlide = 0;
+
+  function renderSlides(){
+    // clear existing slides except the first placeholder
+    slideshow.innerHTML = '';
+    dots.innerHTML = '';
+    if(slides.length === 0){
+      // placeholder
+      const s = document.createElement('div');
+      s.className = 'slide visible';
+      s.innerHTML = '<div style="color:#ffe; font-size:18px; text-align:center; padding:20px;">No photos yet — tap "Add Photos" to upload your memories.</div>';
+      slideshow.appendChild(s);
+      return;
+    }
+    slides.forEach((src, i)=>{
+      const s = document.createElement('div');
+      s.className = 'slide' + (i===currentSlide ? ' visible' : '');
+      s.dataset.index = i;
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = 'photo ' + (i+1);
+      s.appendChild(img);
+      slideshow.appendChild(s);
+
+      const dot = document.createElement('div');
+      dot.className = 'dot' + (i===currentSlide ? ' active' : '');
+      dot.dataset.index = i;
+      dot.addEventListener('click', ()=> { currentSlide = i; renderSlides(); });
+      dots.appendChild(dot);
+    });
+  }
+
+  photoInput.addEventListener('change', (e)=>{
+    const files = Array.from(e.target.files).slice(0,20); // cap to 20
+    slides = [];
+    const readers = files.map(file => {
+      return new Promise((res)=>{
+        const r = new FileReader();
+        r.onload = (ev)=> res(ev.target.result);
+        r.readAsDataURL(file);
+      });
+    });
+    Promise.all(readers).then(results=>{
+      slides = results;
+      currentSlide = 0;
+      renderSlides();
+    });
+  });
+
+  prevSlideBtn.addEventListener('click', ()=>{
+    if(slides.length===0) return;
+    currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+    renderSlides();
+  });
+  nextSlideBtn.addEventListener('click', ()=>{
+    if(slides.length===0) return;
+    currentSlide = (currentSlide + 1) % slides.length;
+    renderSlides();
+  });
+
+  // Choices
+  document.getElementById('choices').addEventListener('click', (e)=>{
+    const target = e.target.closest('.choice');
+    if(!target) return;
+    document.querySelectorAll('.choice').forEach(c=> c.classList.remove('selected'));
+    target.classList.add('selected');
+    const val = target.dataset.val;
+    // save to localStorage so she can later read his choice
+    localStorage.setItem('tobi_choice', val);
+    document.getElementById('choiceSent').style.display = 'block';
+  });
+
+  // Reply save (local)
+  document.getElementById('sendReply').addEventListener('click', ()=>{
+    const txt = document.getElementById('reply').value.trim();
+    if(!txt) { alert('Write a short message first'); return; }
+    // save locally
+    const replies = JSON.parse(localStorage.getItem('tobi_replies') || '[]');
+    replies.push({text:txt, at:new Date().toISOString()});
+    localStorage.setItem('tobi_replies', JSON.stringify(replies));
+    document.getElementById('replySaved').style.display = 'block';
+  });
+
+  document.getElementById('clearReply').addEventListener('click', ()=> {
+    document.getElementById('reply').value = '';
+  });
+
+  // On load, show placeholder slide
+  renderSlides();
+
+  // Accessibility: allow swipe for mobile
+  let touchStartX = 0;
+  let touchEndX = 0;
+  document.addEventListener('touchstart', (e)=> { touchStartX = e.changedTouches[0].screenX; });
+  document.addEventListener('touchend', (e)=> {
+    touchEndX = e.changedTouches[0].screenX;
+    if(touchEndX - touchStartX > 50) { // swipe right
+      // previous
+      if(current > 0) { current--; showPage(current); }
+    } else if (touchStartX - touchEndX > 50) { // swipe left
+      if(current < pages.length-1) { current++; showPage(current); }
+    }
+  });
+</script>
+</body>
+</html>
